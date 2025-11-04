@@ -1,4 +1,16 @@
-# Contributing to `dbt-fabricspark`
+# Contributing to `dbt-fabricspark-plainsight`
+
+## ⚠️ About This Fork
+
+This is a **custom fork** of [microsoft/dbt-fabricspark](https://github.com/microsoft/dbt-fabricspark) maintained by **Plainsight**. This fork was created because:
+- The original repository is not being actively maintained (last commit: 8 months ago)
+- Pull requests are not being resolved in a timely manner
+- Some functionalities are not usable in the original version
+- We need to continue our projects that depend on this adapter with new features and fixes
+
+We welcome contributions to this fork! If you have fixes or features that should go to the upstream project, please consider submitting them to [microsoft/dbt-fabricspark](https://github.com/microsoft/dbt-fabricspark) as well.
+
+---
 
 1. [About this document](#about-this-document)
 3. [Getting the code](#getting-the-code)
@@ -8,7 +20,7 @@
 7. [Submitting a Pull Request](#submitting-a-pull-request)
 
 ## About this document
-This document is a guide intended for folks interested in contributing to `dbt-fabricspark`. Below, we document the process by which members of the community should create issues and submit pull requests (PRs) in this repository. It is not intended as a guide for using `dbt-fabricspark`, and it assumes a certain level of familiarity with Python concepts such as virtualenvs, `pip`, Python modules, and so on. This guide assumes you are using macOS or Linux and are comfortable with the command line.
+This document is a guide intended for folks interested in contributing to `dbt-fabricspark-plainsight`. Below, we document the process by which members of the community should create issues and submit pull requests (PRs) in this repository. It is not intended as a guide for using `dbt-fabricspark`, and it assumes a certain level of familiarity with Python concepts such as virtualenvs, `pip`, Python modules, and so on. This guide assumes you are using macOS or Linux and are comfortable with the command line.
 
 For those wishing to contribute we highly suggest reading the dbt-core's [contribution guide](https://github.com/dbt-labs/dbt-core/blob/HEAD/CONTRIBUTING.md) if you haven't already. Almost all of the information there is applicable to contributing here, too!
 
@@ -18,34 +30,52 @@ You will need `git` in order to download and modify the `dbt-fabricspark` source
 
 ### External contributors
 
-If you are not a member of the `Microsoft` GitHub organization, you can contribute to `dbt-fabricspark` by forking the `dbt-fabricspark` repository. For a detailed overview on forking, check out the [GitHub docs on forking](https://help.github.com/en/articles/fork-a-repo). In short, you will need to:
+If you are not a member of the `PlainsightPro` GitHub organization, you can contribute to `dbt-fabricspark-plainsight` by forking the repository. For a detailed overview on forking, check out the [GitHub docs on forking](https://help.github.com/en/articles/fork-a-repo). In short, you will need to:
 
-1. fork the `dbt-fabricspark` repository
+1. fork the `dbt-fabricspark-plainsight` repository
 2. clone your fork locally
 3. check out a new branch for your proposed changes
 4. push changes to your fork
-5. open a pull request against `microsoft/dbt-fabricspark` from your forked repository
+5. open a pull request against `PlainsightPro/dbt-fabricspark-plainsight` from your forked repository
 
-### Microsoft Org contributors
+### Plainsight team members
 
-If you are a member of the `Microsoft` GitHub organization, you will have push access to the `dbt-fabricspark` repo. Rather than forking `dbt-fabricspark` to make your changes, just clone the repository, check out a new branch, and push directly to that branch.
+If you are a member of the `PlainsightPro` GitHub organization, you will have push access to the `dbt-fabricspark-plainsight` repo. Rather than forking to make your changes, just clone the repository, check out a new branch, and push directly to that branch.
 
 
 ## Running `dbt-fabricspark` in development
 
-### Installation
+### Installation for Users
+
+You can install this fork directly from GitHub:
+
+```sh
+# Install latest version from main branch
+pip install git+https://github.com/PlainsightPro/dbt-fabricspark-plainsight.git
+
+# Install specific version/tag
+pip install git+https://github.com/PlainsightPro/dbt-fabricspark-plainsight.git@v1.9.0
+
+# Install specific branch
+pip install git+https://github.com/PlainsightPro/dbt-fabricspark-plainsight.git@feature-branch
+```
+
+### Development Installation
 
 First make sure that you set up your `virtualenv` as described in [Setting up an environment](https://github.com/dbt-labs/dbt-core/blob/HEAD/CONTRIBUTING.md#setting-up-an-environment).  Ensure you have the uv installed with `pip install uv` or via curl. 
 
-Next, if this is first time installation of `dbt-fabricspark` with latest dependencies:
+Next, clone the repository and install with development dependencies:
 
 ```sh
+git clone https://github.com/PlainsightPro/dbt-fabricspark-plainsight.git
+cd dbt-fabricspark-plainsight
 uv pip install -e . --group dev
 ```
 
-If have installed packages locally using uv pip install, make sure to run uv sync to update the uv.lock file from your environment.
+If you have installed packages locally using uv pip install, make sure to run uv sync to update the uv.lock file from your environment:
 ```sh 
 uv pip install <package>
+uv sync
 ```
 
 When `dbt-fabricspark` is installed this way, any changes you make to the `dbt-fabricspark` source code will be reflected immediately in your next `dbt-fabricspark` run.
@@ -98,10 +128,12 @@ Changelogs are managed manually for now. As you raise a PR, provide the changes 
 
 ## Submitting a Pull Request
 
-Microsoft provides a CI environment to test changes to the `dbt-fabricspark` adapter, and periodic checks against the development version of `dbt-core` through Github Actions.
+A `dbt-fabricspark-plainsight` maintainer will review your PR. They may suggest code revision for style or clarity, or request that you add unit or functional test(s). These are good things! We believe that, with a little bit of help, anyone can contribute high-quality code.
 
-A `dbt-fabricspark` maintainer will review your PR. They may suggest code revision for style or clarity, or request that you add unit or functional test(s). These are good things! We believe that, with a little bit of help, anyone can contribute high-quality code.
+Once all requests and answers have been answered, the maintainer can trigger CI testing (if available).
 
-Once all requests and answers have been answered the `dbt-fabricspark` maintainer can trigger CI testing.
+Once all tests are passing and your PR has been approved, a `dbt-fabricspark-plainsight` maintainer will merge your changes into the active development branch. And that's it! Happy developing :tada:
 
-Once all tests are passing and your PR has been approved, a `dbt-fabricspark` maintainer will merge your changes into the active development branch. And that's it! Happy developing :tada:
+### Contributing to Upstream
+
+If your contribution is a general fix or feature that would benefit the upstream project, please consider also submitting it to [microsoft/dbt-fabricspark](https://github.com/microsoft/dbt-fabricspark). This helps the broader community even if response times are slower there.

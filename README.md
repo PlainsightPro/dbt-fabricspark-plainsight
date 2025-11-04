@@ -1,3 +1,17 @@
+# dbt-fabricspark-plainsight
+
+> **⚠️ IMPORTANT: Custom Fork Notice**
+> 
+> This is a **custom fork** of [microsoft/dbt-fabricspark](https://github.com/microsoft/dbt-fabricspark) maintained by **Plainsight**. 
+> 
+> **Why this fork exists:**
+> - The original repository is not sufficiently maintained
+> - Pull requests are not being resolved in a timely manner
+> 
+> This fork is maintained specifically for dbt-fabricspark projects and includes fixes, improvements, and features that are critical for our work.
+
+---
+
 <a href="https://github.com/microsoft/dbt-fabricspark/actions/workflows/integration.yml">
   <img src="https://github.com/microsoft/dbt-fabricspark/actions/workflows/integration.yml/badge.svg?branch=main&event=pull_request" alt="Adapter Integration Tests"/>
 </a>
@@ -7,9 +21,31 @@
 
 dbt is the T in ELT. Organize, cleanse, denormalize, filter, rename, and pre-aggregate the raw data in your warehouse so that it's ready for analysis.
 
-## dbt-fabricspark
+## About dbt-fabricspark
 
 The `dbt-fabricspark` package contains all of the code enabling dbt to work with Synapse Spark in Microsoft Fabric. For more information, consult [the docs](https://docs.getdbt.com/docs/profile-fabricspark).
+
+## Installation
+
+Install directly from GitHub using pip:
+
+```bash
+pip install git+https://github.com/PlainsightPro/dbt-fabricspark-plainsight.git
+```
+
+Or install a specific version/tag:
+
+```bash
+pip install git+https://github.com/PlainsightPro/dbt-fabricspark-plainsight.git@v1.9.0
+```
+
+For development installation:
+
+```bash
+git clone https://github.com/PlainsightPro/dbt-fabricspark-plainsight.git
+cd dbt-fabricspark-plainsight
+pip install -e .
+```
 
 ## Getting started
 
@@ -40,23 +76,16 @@ fabric-spark-test:
         retry_all: true
 ```
 
-### Reporting bugs and contributing code
+## Reporting bugs and contributing code
 
--   Want to report a bug or request a feature? Let us know on [Slack](http://slack.getdbt.com/), or open [an issue](https://github.com/microsoft/dbt-fabricspark/issues/new).
-
-## Code of Conduct
-
-Everyone interacting in the Microsoft project's codebases, issue trackers, and mailing lists is expected to follow the [PyPA Code of Conduct](https://www.pypa.io/en/latest/code-of-conduct/).
+- Want to report a bug or request a feature? Open [an issue](https://github.com/PlainsightPro/dbt-fabricspark-plainsight/issues/new) in this repository
+- Want to contribute? Check out the [Contributing Guide](https://github.com/PlainsightPro/dbt-fabricspark-plainsight/blob/HEAD/CONTRIBUTING.md)
+- For the upstream project: Visit [microsoft/dbt-fabricspark](https://github.com/microsoft/dbt-fabricspark)
 
 ## Join the dbt Community
 
 - Be part of the conversation in the [dbt Community Slack](http://community.getdbt.com/)
 - Read more on the [dbt Community Discourse](https://discourse.getdbt.com)
-
-## Reporting bugs and contributing code
-
-- Want to report a bug or request a feature? Let us know on [Slack](http://community.getdbt.com/), or open [an issue](https://github.com/microsoft/dbt-fabricspark/issues/new)
-- Want to help us build dbt? Check out the [Contributing Guide](https://github.com/microsoft/dbt-fabricspark/blob/HEAD/CONTRIBUTING.md)
 
 ## Code of Conduct
 
