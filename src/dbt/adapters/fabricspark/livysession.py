@@ -309,15 +309,15 @@ class LivyCursor:
         """
         self._rows = None
 
-    def _submitLivyCode(self, code) -> Response:
+    def _submitLivyCode(self, code, language="sql") -> Response:
         if self.livy_session.is_new_session_required:
             LivySessionManager.connect(self.credential)
             self.session_id = self.livy_session.session_id
 
-        # Submit code
-        data = {"code": code, "kind": "sql"}
+        # Submit code - kind can be 'sql' or 'pyspark'
+        data = {"code": code, "kind": language}
         logger.debug(
-            f"Submitted: {data} {self.connect_url + '/sessions/' + self.session_id + '/statements'}"
+            f"Submitted ({language}): {self.connect_url + '/sessions/' + self.session_id + '/statements'}"
         )
         res = requests.post(
             self.connect_url + "/sessions/" + self.session_id + "/statements",
@@ -336,6 +336,15 @@ class LivyCursor:
         code = re.sub(r"\s*/\*(.|\n)*?\*/\s*", "\n", sql, re.DOTALL).strip()
         return code
 
+    def _getLivyPyspark(self, code) -> str:
+        """
+        Prepare PySpark code for Livy execution.
+        Trims common leading whitespace to handle indented code blocks.
+        """
+        import textwrap
+
+        return textwrap.dedent(code).strip()
+
     def _getLivyResult(self, res_obj) -> Response:
         json_res = res_obj.json()
         while True:
@@ -352,32 +361,38 @@ class LivyCursor:
                 return res
             time.sleep(DEFAULT_POLL_STATEMENT_WAIT)
 
-    def execute(self, sql: str, *parameters: Any) -> None:
+    def execute(self, code: str, language: str = "sql", *parameters: Any) -> None:
         """
-        Execute a sql statement.
+        Execute SQL or PySpark code.
 
         Parameters
         ----------
-        sql : str
-            Execute a sql statement.
+        code : str
+            The code to execute (SQL or PySpark).
+        language : str
+            The language type: 'sql' or 'pyspark' (default: 'sql').
         *parameters : Any
-            The parameters.
+            The parameters (for SQL parameterization).
 
         Raises
         ------
-        NotImplementedError
-            If there are parameters given. We do not format sql statements.
+        DbtDatabaseError
+            If the code execution fails.
 
         Source
         ------
         https://github.com/mkleehammer/pyodbc/wiki/Cursor#executesql-parameters
         """
         if len(parameters) > 0:
-            sql = sql % parameters
+            code = code % parameters
 
-        # TODO: handle parameterised sql
+        # Prepare code based on language type
+        if language == "pyspark":
+            prepared_code = self._getLivyPyspark(code)
+        else:
+            prepared_code = self._getLivySQL(code)
 
-        res = self._getLivyResult(self._submitLivyCode(self._getLivySQL(sql)))
+        res = self._getLivyResult(self._submitLivyCode(prepared_code, language))
         logger.debug(res)
         if res["output"]["status"] == "ok":
             values = res["output"]["data"]["application/json"]
@@ -389,7 +404,7 @@ class LivyCursor:
                 self._schema = []
         else:
             self._rows = None
-            self._schema = None
+            self._schema = []
 
             raise DbtDatabaseError("Error while executing query: " + res["output"]["evalue"])
 
@@ -558,15 +573,32 @@ class LivySessionConnectionWrapper(object):
     def fetchall(self):
         return self._cursor.fetchall()
 
-    def execute(self, sql, bindings=None):
-        if sql.strip().endswith(";"):
-            sql = sql.strip()[:-1]
+    def execute(self, code, language="sql", bindings=None):
+        """Execute SQL or PySpark code via Livy session.
+
+        Parameters
+        ----------
+        code : str
+            The code to execute
+        language : str
+            The language type: 'sql' or 'pyspark'. Auto-detects if code contains
+            'def model(dbt, session):' pattern for Python models.
+        bindings : list, optional
+            Parameter bindings for SQL queries
+        """
+        # Auto-detect Python models by checking for dbt model signature
+        if "def model(dbt, session):" in code:
+            language = "pyspark"
+
+        # Strip trailing semicolons for SQL (Livy doesn't like them)
+        if language == "sql" and code.strip().endswith(";"):
+            code = code.strip()[:-1]
 
         if bindings is None:
-            self._cursor.execute(sql)
+            self._cursor.execute(code, language)
         else:
             bindings = [self._fix_binding(binding) for binding in bindings]
-            self._cursor.execute(sql, *bindings)
+            self._cursor.execute(code, language, *bindings)
 
     @property
     def description(self):

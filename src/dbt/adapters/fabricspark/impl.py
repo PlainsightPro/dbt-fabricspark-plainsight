@@ -12,6 +12,7 @@ from typing import (
     Optional,
     Set,
     Tuple,
+    Type,
     Union,
 )
 
@@ -27,13 +28,15 @@ from dbt_common.contracts.constraints import ConstraintType
 from dbt_common.exceptions import CompilationError, DbtRuntimeError
 from dbt_common.utils import AttrDict, executor
 
-from dbt.adapters.base import AdapterConfig, BaseRelation
+from dbt.adapters.base import AdapterConfig, BaseRelation, PythonJobHelper
 from dbt.adapters.base.impl import ConstraintSupport, catch_as_completed
 from dbt.adapters.base.relation import InformationSchema
-from dbt.adapters.contracts.relation import RelationConfig, RelationType
+from dbt.adapters.contracts.connection import AdapterResponse
+from dbt.adapters.contracts.relation import RelationConfig
 from dbt.adapters.events.logging import AdapterLogger
 from dbt.adapters.fabricspark import FabricSparkColumn, FabricSparkConnectionManager
-from dbt.adapters.fabricspark.relation import FabricSparkRelation
+from dbt.adapters.fabricspark.python_submissions import BaseFabricSparkHelper
+from dbt.adapters.fabricspark.relation import FabricSparkRelation, FabricSparkRelationType
 from dbt.adapters.sql import SQLAdapter
 
 logger = AdapterLogger("fabricspark")
@@ -185,8 +188,10 @@ class FabricSparkAdapter(SQLAdapter):
         for row in row_list:
             _schema, name, information = relation_info_func(row)
 
-            rel_type: RelationType = (
-                RelationType.View if "Type: VIEW" in information else RelationType.Table
+            rel_type: FabricSparkRelationType = (
+                FabricSparkRelationType.View
+                if "Type: VIEW" in information
+                else FabricSparkRelationType.Table
             )
             is_delta: bool = "Provider: delta" in information
             relation: BaseRelation = self.Relation.create(
@@ -442,7 +447,7 @@ class FabricSparkAdapter(SQLAdapter):
     def run_sql_for_tests(self, sql, fetch, conn):
         cursor = conn.handle.cursor()
         try:
-            cursor.execute(sql)
+            cursor.execute(sql, "sql")  # Add language parameter
             if fetch == "one":
                 if hasattr(cursor, "fetchone"):
                     return cursor.fetchone()
@@ -458,6 +463,24 @@ class FabricSparkAdapter(SQLAdapter):
             raise
         finally:
             conn.transaction_open = False
+
+    @property
+    def default_python_submission_method(self) -> str:
+        """Default submission method for Python models."""
+        return "livy_session_statement"
+
+    @property
+    def python_submission_helpers(self) -> Dict[str, Type[PythonJobHelper]]:
+        """Map submission methods to their Python job helper implementations."""
+        return {
+            "workflow_job": BaseFabricSparkHelper,
+            "livy_session_statement": BaseFabricSparkHelper,
+            "livy_session_batch": BaseFabricSparkHelper,
+        }
+
+    def generate_python_submission_response(self, submission_result: Any) -> AdapterResponse:
+        """Generate adapter response for Python model submissions."""
+        return self.connections.get_response(None)
 
     def standardize_grants_dict(self, grants_table: "agate.Table") -> dict:
         grants_dict: Dict[str, List[str]] = {}

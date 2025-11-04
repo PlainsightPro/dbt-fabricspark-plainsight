@@ -248,7 +248,7 @@ class FabricSparkConnectionManager(SQLConnectionManager):
         try:
             sql = "split(version(), ' ')[0] as version"
             cursor = connection.handle.cursor()
-            cursor.execute(sql)
+            cursor.execute(sql, "sql")  # Add language parameter
             res = cursor.fetchall()
             FabricSparkConnectionManager.spark_version = res[0][0]
 
@@ -263,6 +263,7 @@ class FabricSparkConnectionManager(SQLConnectionManager):
     def add_query(
         self,
         sql: str,
+        language: str = "sql",
         auto_begin: bool = True,
         bindings: Optional[Any] = None,
         abridge_sql_log: bool = False,
@@ -277,6 +278,7 @@ class FabricSparkConnectionManager(SQLConnectionManager):
         def _execute_query_with_retry(
             cursor: Any,
             sql: str,
+            language: str,
             bindings: Optional[Any],
             retryable_exceptions: Tuple[Type[Exception], ...],
             retry_limit: int,
@@ -288,7 +290,7 @@ class FabricSparkConnectionManager(SQLConnectionManager):
             """
             retry_limit = connection.credentials.connect_retries or 3
             try:
-                cursor.execute(sql, bindings)
+                cursor.execute(sql, language, bindings)
             except retryable_exceptions as e:
                 # Cease retries and fail when limit is hit.
                 if attempt >= retry_limit:
@@ -304,6 +306,7 @@ class FabricSparkConnectionManager(SQLConnectionManager):
                 return _execute_query_with_retry(
                     cursor=cursor,
                     sql=sql,
+                    language=language,
                     bindings=bindings,
                     retryable_exceptions=retryable_exceptions,
                     retry_limit=retry_limit,
@@ -330,6 +333,7 @@ class FabricSparkConnectionManager(SQLConnectionManager):
                 _execute_query_with_retry(
                 cursor=cursor,
                 sql=sql,
+                language=language,
                 bindings=bindings,
                 retryable_exceptions=retryable_exceptions,
                 retry_limit=retry_limit,

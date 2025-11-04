@@ -54,7 +54,7 @@ You can install this fork directly from GitHub:
 pip install git+https://github.com/PlainsightPro/dbt-fabricspark-plainsight.git
 
 # Install specific version/tag
-pip install git+https://github.com/PlainsightPro/dbt-fabricspark-plainsight.git@v1.9.0
+pip install git+https://github.com/PlainsightPro/dbt-fabricspark-plainsight.git@v1.9.2
 
 # Install specific branch
 pip install git+https://github.com/PlainsightPro/dbt-fabricspark-plainsight.git@feature-branch

@@ -25,6 +25,13 @@ dbt is the T in ELT. Organize, cleanse, denormalize, filter, rename, and pre-agg
 
 The `dbt-fabricspark` package contains all of the code enabling dbt to work with Synapse Spark in Microsoft Fabric. For more information, consult [the docs](https://docs.getdbt.com/docs/profile-fabricspark).
 
+### ✨ Features in This Fork
+
+- **PySpark Model Support**: Write dbt models in Python/PySpark for advanced data transformations
+- **dbt 1.9.2 Compatible**: Updated to work with the latest dbt-core and dbt-adapters APIs
+- **FabricSparkRelationType**: Custom relation type class for better type safety and compatibility
+- **Enhanced Stability**: Additional bug fixes and improvements not yet in upstream
+
 ## Installation
 
 Install directly from GitHub using pip:
@@ -36,7 +43,8 @@ pip install git+https://github.com/PlainsightPro/dbt-fabricspark-plainsight.git
 Or install a specific version/tag:
 
 ```bash
-pip install git+https://github.com/PlainsightPro/dbt-fabricspark-plainsight.git@v1.9.0
+# Install specific version/tag
+pip install git+https://github.com/PlainsightPro/dbt-fabricspark-plainsight.git@v1.9.2
 ```
 
 For development installation:
@@ -53,7 +61,8 @@ pip install -e .
 - Read the [introduction](https://docs.getdbt.com/docs/introduction/) and [viewpoint](https://docs.getdbt.com/docs/about/viewpoint/)
 
 ## Running locally
-Use livy endpoint to connect to Synapse Spark in Microsoft Fabric. The binaries required to setup local environment is not possiblw with Synapse Spark in Microsoft Fabric. However, you can configure profile to connect via livy endpoints.
+
+Use Livy endpoint to connect to Synapse Spark in Microsoft Fabric. Configure your profile to connect via Livy endpoints.
 
 Create a profile like this one:
 
@@ -62,18 +71,53 @@ fabric-spark-test:
   target: fabricspark-dev
   outputs:
     fabricspark-dev:
-        authentication: CLI
+        authentication: CLI  # or use client_id/client_secret/tenant_id for SPN
         method: livy
-        connect_retries: 0
+        connect_retries: 3
         connect_timeout: 10
         endpoint: https://api.fabric.microsoft.com/v1
-        workspaceid: bab084ca-748d-438e-94ad-405428bd5694
-        lakehouseid: ccb45a7d-60fc-447b-b1d3-713e05f55e9a
-        lakehouse: test
-        schema: test
+        workspaceid: <your-workspace-guid>
+        lakehouseid: <your-lakehouse-guid>
+        lakehouse: <your-lakehouse-name>
+        schema: <your-schema>
         threads: 1
         type: fabricspark
         retry_all: true
+        spark_config:
+          name: "dbt-session"  # Required!
+```
+
+### PySpark Models
+
+This fork supports Python models using PySpark! Create `.py` files in your `models/` directory:
+
+```python
+# models/my_pyspark_model.py
+def model(dbt, session):
+    """
+    Parameters:
+        dbt: dbt context with config, this, ref(), source() methods
+        session: Active PySpark session
+    
+    Returns:
+        PySpark DataFrame
+    """
+    # Load data using dbt's ref() or source()
+    source_df = dbt.ref("source_model")
+    
+    # Apply PySpark transformations
+    from pyspark.sql import functions as F
+    
+    result_df = source_df.filter(F.col("status") == "active") \
+                         .groupBy("category") \
+                         .agg(F.count("*").alias("count"))
+    
+    return result_df
+```
+
+Run it like any other dbt model:
+```bash
+dbt run --select my_pyspark_model
 ```
 
 ## Reporting bugs and contributing code

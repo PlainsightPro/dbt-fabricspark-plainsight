@@ -59,7 +59,7 @@ body:
             - **dbt-adapters (working version)**: 1.1.0
             - **dbt-adapters (regression version)**: 1.2.0
             - **dbt-core (working version)**: 1.8.1 (`dbt --version`)
-            - **dbt-fabricspark (regression version)**: 1.9.0 (`dbt --version`)
+            - **dbt-fabricspark (regression version)**: 1.9.2 (`dbt --version`)
         value: |
             - OS:
             - Python:

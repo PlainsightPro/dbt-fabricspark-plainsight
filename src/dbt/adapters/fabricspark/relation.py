@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
-from typing import Optional, TypeVar
+from typing import Optional, TypeVar, Type
 
 from dbt_common.exceptions import DbtRuntimeError
+from dbt_common.dataclass_schema import StrEnum
 
 from dbt.adapters.base.relation import BaseRelation, Policy
 from dbt.adapters.events.logging import AdapterLogger
@@ -9,6 +10,12 @@ from dbt.adapters.events.logging import AdapterLogger
 logger = AdapterLogger("fabricspark")
 
 Self = TypeVar("Self", bound="BaseRelation")
+
+
+class FabricSparkRelationType(StrEnum):
+    Table = "table"
+    View = "view"
+    CTE = "cte"
 
 
 @dataclass
@@ -33,6 +40,18 @@ class FabricSparkRelation(BaseRelation):
     is_delta: Optional[bool] = None
     # TODO: make this a dict everywhere
     information: Optional[str] = None
+
+    @classmethod
+    def __pre_deserialize__(cls, data: dict) -> dict:
+        data = super().__pre_deserialize__(data)
+        # Defensive: set type to "table" if not provided or is None
+        if data.get("type") is None:
+            data["type"] = FabricSparkRelationType.Table
+        return data
+
+    @classmethod
+    def get_relation_type(cls) -> Type[FabricSparkRelationType]:
+        return FabricSparkRelationType
 
     def __post_init__(self) -> None:
         if self.database != self.schema and self.database:

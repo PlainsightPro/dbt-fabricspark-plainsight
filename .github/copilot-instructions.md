@@ -27,7 +27,12 @@ This is a **Plainsight-maintained fork** of microsoft/dbt-fabricspark, created d
    - Constraint support: All constraints are `NOT_ENFORCED` (Spark limitation)
    - Catalog operations use `DESCRIBE EXTENDED` and `SHOW TABLES` (handles v2 Iceberg tables)
 
-4. **Shortcuts Feature** (`src/dbt/adapters/fabricspark/shortcuts.py`)
+4. **Relation Types** (`src/dbt/adapters/fabricspark/relation.py`)
+   - `FabricSparkRelationType`: Custom enum (Table, View, CTE) for better type safety
+   - `FabricSparkRelation`: Custom relation class with `__pre_deserialize__` and `get_relation_type()`
+   - Defensive deserialization sets default type to "table" if None
+
+5. **Shortcuts Feature** (`src/dbt/adapters/fabricspark/shortcuts.py`)
    - Creates Fabric shortcuts to external data sources via REST API
    - Configured via `shortcuts_json_str` in profile or `shortcuts.json` file
    - Auto-deletes and recreates if source path/workspace/item ID mismatch detected
@@ -64,7 +69,7 @@ Users can install this fork directly from GitHub:
 pip install git+https://github.com/PlainsightPro/dbt-fabricspark-plainsight.git
 
 # Install specific version/tag
-pip install git+https://github.com/PlainsightPro/dbt-fabricspark-plainsight.git@v1.9.0
+pip install git+https://github.com/PlainsightPro/dbt-fabricspark-plainsight.git@v1.9.2
 
 # Install specific branch
 pip install git+https://github.com/PlainsightPro/dbt-fabricspark-plainsight.git@feature-branch
@@ -149,6 +154,31 @@ fabricspark-dev:
 
 ## Project-Specific Patterns
 
+### PySpark Model Support
+
+**NEW**: This fork supports Python (PySpark) models via Livy sessions:
+
+```python
+# models/my_pyspark_model.py
+def model(dbt, session):
+    """
+    dbt: dbt context object
+    session: PySpark session
+    Returns: PySpark DataFrame
+    """
+    df = session.sql("SELECT * FROM source_table")
+    # Transform with PySpark
+    result_df = df.filter(df.status == 'active')
+    return result_df
+```
+
+**Key implementation details:**
+- `python_submissions.py`: `BaseFabricSparkHelper` class handles Python model execution
+- Auto-detection: Presence of `def model(dbt, session):` triggers PySpark mode
+- Language parameter: All `execute()` methods support `language="pyspark"` or `"sql"`
+- Submission method: `default_python_submission_method` returns `"livy_session_statement"`
+- Uses same Livy session as SQL queries (no separate session overhead)
+
 ### Macro Dispatching
 
 Macros use `adapter.dispatch()` pattern to override dbt-core defaults:
@@ -195,7 +225,7 @@ Common error messages checked:
 
 Version defined in `src/dbt/adapters/fabricspark/__version__.py`:
 ```python
-version = "1.9.0"
+version = "1.9.2"
 ```
 
 Used by `hatchling` build backend via `tool.hatch.version.path` in `pyproject.toml`.
@@ -221,9 +251,23 @@ When contributing fixes that should go upstream:
 3. Consider submitting to [microsoft/dbt-fabricspark](https://github.com/microsoft/dbt-fabricspark)
 4. Note in PR description if already submitted upstream
 
+## dbt Version Compatibility
+
+This fork is based on **upstream v1.9.2** and is compatible with:
+- **dbt-core**: >=1.8.7, <2.0
+- **dbt-adapters**: >=1.7.0, <2.0
+- **dbt-common**: >=1.10.0, <2.0
+
+Updated API signatures:
+- `get_catalog()`: Uses `relation_configs` and `used_schemas` parameters (not `manifest`)
+- `_get_one_catalog()`: Uses `used_schemas` parameter (not `manifest`)
+- Follows dbt-adapters 1.7+ conventions
+- Uses custom `FabricSparkRelationType` enum instead of base `RelationType` for better type safety
+
 ## Key Files Reference
 
 - **Entry point**: `src/dbt/adapters/fabricspark/__init__.py`
+- **Python model support**: `src/dbt/adapters/fabricspark/python_submissions.py`
 - **Profile template**: `src/dbt/include/fabricspark/profile_template.yml`
 - **Macro library**: `src/dbt/include/fabricspark/macros/` (50+ SQL macros)
 - **Test fixtures**: `tests/functional/` uses pytest with `dbt-tests-adapter` framework
